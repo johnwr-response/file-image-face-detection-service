@@ -15,6 +15,7 @@ import org.springframework.stereotype.Component;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 @Slf4j
@@ -31,8 +32,8 @@ public class ImageFaceDetectionJobListener {
             byte[] downloadedBytes = fileStoreFetcherService.fetchFile(imageFaceDetectionJobDto.getFileItemId());
             BufferedImage image = ImageIO.read(new ByteArrayInputStream(downloadedBytes));
             if (image!=null) {
-                Imgcodecs imageCodecs = new Imgcodecs();
-                Mat loadedImage = imageCodecs.imread("");
+//                Imgcodecs imageCodecs = new Imgcodecs();
+                Mat loadedImage = bufferedImage2Mat(image);
                 MatOfRect facesDetected = new MatOfRect();
                 CascadeClassifier cascadeClassifier = new CascadeClassifier();
                 int minFaceSize = Math.round(loadedImage.rows() * 0.1f);
@@ -54,4 +55,17 @@ public class ImageFaceDetectionJobListener {
 
         }
     }
+
+    public static Mat bufferedImage2Mat(BufferedImage image) throws IOException {
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        ImageIO.write(image, "jpg", byteArrayOutputStream);
+        byteArrayOutputStream.flush();
+        return Imgcodecs.imdecode(new MatOfByte(byteArrayOutputStream.toByteArray()), Imgcodecs.IMREAD_UNCHANGED);
+    }
+    public static BufferedImage mat2BufferedImage(Mat matrix)throws IOException {
+        MatOfByte mob=new MatOfByte();
+        Imgcodecs.imencode(".jpg", matrix, mob);
+        return ImageIO.read(new ByteArrayInputStream(mob.toArray()));
+    }
+
 }
